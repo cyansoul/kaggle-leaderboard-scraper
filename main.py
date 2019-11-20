@@ -15,9 +15,15 @@ import warnings
 warnings.filterwarnings('ignore')
 
 
-def data_scraper(competition):
-    url = 'https://www.kaggle.com/c/{competition}/leaderboard.json?includeBeforeUser=true&includeAfterUser=true&type=private'.format(
-        competition=competition)
+def data_scraper(competition, type):
+    if type == 'public':
+        url = 'https://www.kaggle.com/c/{competition}/leaderboard.json?includeBeforeUser=true&includeAfterUser=true'.format(
+            competition=competition)
+    elif type == 'private':
+        url = 'https://www.kaggle.com/c/{competition}/leaderboard.json?includeBeforeUser=true&includeAfterUser=true&type=private'.format(
+            competition=competition)
+    else:
+        print('榜单类型有误，请检查')
 
     http = urllib3.PoolManager()
     response = http.request('GET', url)
@@ -28,8 +34,8 @@ def data_scraper(competition):
     return ranks
 
 
-def data_parser(competition):
-    ranks0 = data_scraper(competition)
+def data_parser(competition, type='public'):
+    ranks0 = data_scraper(competition, type)
     ranks1 = json.loads(ranks0[2:-1])['beforeUser']
     ranks2 = json.loads(ranks0[2:-1])['afterUser']
 
@@ -58,10 +64,12 @@ if __name__ == "__main__":
 
     try:
         competition = sys.argv[1]
-        print('开始爬取并解析{competition}的leaderboard数据...'.format(competition=competition))
-        data = data_parser(competition)
-        data.to_csv('{competition}_rank_data.csv'.format(competition=competition), index=False)
+        type = sys.argv[2]
+
+        print('开始爬取并解析{competition}比赛的leaderboard数据...'.format(competition=competition))
+        data = data_parser(competition, type)
+        data.to_csv('{competition}_rank_data.csv'.format(competition=competition.replace('-', '_')), index=False)
         print('数据已存入文件...')
 
     except Exception as e:
-        print('该竞赛不存在，请检查名字！')
+        print('输入有误，请检查')
